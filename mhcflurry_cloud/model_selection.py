@@ -1,23 +1,15 @@
+from __future__ import absolute_import
+
 import logging
 
-import fancyimpute
-import mhcflurry
+from mhcflurry_cloud.celery import app
 
-import celery
-
-class LocalCeleryConfig(object):
-    CELERY_ALWAYS_EAGER = True
-
-celery_app = celery.Celery('model_selection')
-celery_app.config_from_object(LocalCeleryConfig)
-
-@celery_app.task
+@app.task
 def impute(dataset, imputer, allele=None, **kwargs):
     result = dataset.impute_missing_values(imputer, **kwargs)
     if allele is not None:
         result = result.get_allele(allele)
     return result
-
 
 def make_cv_folds(
         train_data,
