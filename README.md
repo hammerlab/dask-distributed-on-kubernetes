@@ -27,3 +27,7 @@ Try the example:
 ```
 $ python example.py
 ```
+
+## Running on google cloud
+
+TODO

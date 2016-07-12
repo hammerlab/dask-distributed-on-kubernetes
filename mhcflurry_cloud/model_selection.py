@@ -6,6 +6,9 @@ from mhcflurry_cloud.celery import app
 
 @app.task
 def impute(dataset, imputer, allele=None, **kwargs):
+    '''
+    Celery wrapper for imputation.
+    '''
     result = dataset.impute_missing_values(imputer, **kwargs)
     if allele is not None:
         result = result.get_allele(allele)
