@@ -3,9 +3,10 @@ Infrastructure for mhcflurry model selection in the cloud
 
 ## Running locally
 
-Install the package:
+Install the package and run tests. From the repo directory:
 ```
 $ pip install -e .
+$ nosetests .
 ```
 
 We'll run locally using RabbitMQ. See [docs](http://docs.celeryproject.org/en/latest/getting-started/brokers/rabbitmq.html#broker-rabbitmq).

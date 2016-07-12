@@ -3,7 +3,13 @@ import fancyimpute
 
 from . import data_path
 
+import mhcflurry_cloud
 from mhcflurry_cloud import model_selection
+
+# Run all tasks locally.
+mhcflurry_cloud.celery.app.conf.update(
+    CELERY_ALWAYS_EAGER=True,
+)
 
 def test_imputation():
     imputer = fancyimpute.MICE(
