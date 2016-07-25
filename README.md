@@ -20,13 +20,11 @@ $ launchctl load ~/Library/LaunchAgents/homebrew.mxcl.rabbitmq.plist  # start no
 
 Start celery worker:
 ```
-$ celery -A mhcflurry_cloud.model_selection.app worker --loglevel=info --concurrency=10
+$ celery -A mhcflurry_cloud.model_selection.app worker --loglevel=info
 ```
 
-Try the example:
-```
-$ python example.py
-```
+Then try running the [example notebook](notebooks/example1.ipynb).
+
 
 ## Running on google cloud
 

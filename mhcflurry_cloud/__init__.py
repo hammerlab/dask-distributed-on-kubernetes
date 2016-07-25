@@ -1,8 +1,14 @@
 from __future__ import absolute_import
 
-from . import celery, model_selection
+from .common import AlleleSpecificTrainTestFold
+from .train import (
+    train_and_test_across_models_and_folds,
+    models_grid)
+from .cross_validation import cross_validation_folds
 
 __all__ = [
-    'model_selection',
-    'celery',
+    'AlleleSpecificTrainTestFold',
+    'cross_validation_folds',
+    'train_and_test_across_models_and_folds',
+    'models_grid',
 ]

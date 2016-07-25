@@ -5,7 +5,10 @@ from celery import Celery
 app = Celery('mhcflurry_cloud',
              broker='amqp://',
              backend='amqp://',
-             include=['mhcflurry_cloud.model_selection'])
+
+             # This list must include all modules that define celery tasks:
+             include=[
+                'mhcflurry_cloud.train'])
 
 if __name__ == '__main__':
     app.start()
