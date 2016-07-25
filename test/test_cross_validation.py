@@ -9,11 +9,6 @@ from . import data_path
 
 import mhcflurry_cloud
 
-# Run all tasks locally.
-mhcflurry_cloud.celery.app.conf.update(
-    CELERY_ALWAYS_EAGER=True,
-)
-
 def test_cross_validation():
     imputer = fancyimpute.MICE(
         n_imputations=2, n_burn_in=1, n_nearest_columns=25)

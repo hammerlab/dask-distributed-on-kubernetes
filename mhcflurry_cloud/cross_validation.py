@@ -3,10 +3,12 @@ from __future__ import absolute_import
 import collections
 import logging
 
+from joblib import Parallel, delayed
+
 import pepdata
 
 from .common import AlleleSpecificTrainTestFold
-from .train_and_test import task_impute
+from .train import impute_and_select_allele
 
 gbmr4_transformer = pepdata.reduced_alphabet.make_alphabet_transformer("gbmr4")
 def default_projector(peptide):
@@ -78,7 +80,10 @@ def cross_validation_folds(
         impute_kwargs={
             'min_observations_per_peptide': 2,
             'min_observations_per_allele': 2,
-        }):
+        },
+        n_jobs=1,
+        verbose=0,
+        pre_dispatch='2*n_jobs'):
     '''
     Split a Dataset into n_folds cross validation folds for each allele,
     optionally performing imputation.
@@ -114,6 +119,7 @@ def cross_validation_folds(
         alleles = train_data.unique_alleles()
 
     result = []
+    imputation_tasks = []
     for allele in alleles:
         logging.info("Allele: %s" % allele)
         cv_iter = train_data.cross_validation_iterator(
@@ -135,25 +141,32 @@ def cross_validation_folds(
                         len(full_test_split), len(test_split)))
             else:
                 test_split = full_test_split
-
-            imputed_train_split_result = None
+ 
             if imputer is not None:
-                imputed_train_split_result = task_impute.delay(
+                imputation_tasks.append(delayed(impute_and_select_allele)(
                     dataset=all_allele_train_split,
                     imputer=imputer,
                     allele=allele,
-                    **impute_kwargs)
+                    **impute_kwargs))
+
             train_split = all_allele_train_split.get_allele(allele)
             fold = AlleleSpecificTrainTestFold(
                 allele=allele,
                 train=train_split,
-                imputed_train=imputed_train_split_result,
+                imputed_train=None,
                 test=test_split)
             result.append(fold)
 
     if imputer is not None:
+        imputation_results = Parallel(
+            n_jobs=n_jobs,
+            verbose=verbose,
+            pre_dispatch=pre_dispatch)(imputation_tasks)
+
         result = [
-            result_fold._replace(imputed_train=result_fold.imputed_train.get())
-            for result_fold in result
+            result_fold._replace(imputed_train=imputation_result)
+            for (imputation_result, result_fold)
+            in zip(imputation_results, result)
         ]
     return result
+
