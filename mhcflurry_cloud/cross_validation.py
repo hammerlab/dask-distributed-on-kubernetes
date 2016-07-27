@@ -5,6 +5,7 @@ import logging
 
 from joblib import Parallel, delayed
 
+from mhcflurry.dataset import Dataset
 import pepdata
 
 from .common import AlleleSpecificTrainTestFold
@@ -144,7 +145,7 @@ def cross_validation_folds(
  
             if imputer is not None:
                 imputation_tasks.append(delayed(impute_and_select_allele)(
-                    dataset=all_allele_train_split,
+                    all_allele_train_split.to_dataframe(),
                     imputer=imputer,
                     allele=allele,
                     **impute_kwargs))
@@ -158,13 +159,16 @@ def cross_validation_folds(
             result.append(fold)
 
     if imputer is not None:
+        #import pdb ; pdb.set_trace()
         imputation_results = Parallel(
+            backend='threading',
             n_jobs=n_jobs,
             verbose=verbose,
             pre_dispatch=pre_dispatch)(imputation_tasks)
 
         result = [
-            result_fold._replace(imputed_train=imputation_result)
+            result_fold._replace(
+                imputed_train=Dataset(imputation_result))
             for (imputation_result, result_fold)
             in zip(imputation_results, result)
         ]

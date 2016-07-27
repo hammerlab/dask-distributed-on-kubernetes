@@ -9,6 +9,7 @@ import numpy
 import pandas
 
 import mhcflurry
+from mhcflurry.dataset import Dataset
 
 from joblib import Parallel, delayed
 
@@ -65,14 +66,19 @@ def models_grid(**kwargs):
     ]
     return models
 
-def impute_and_select_allele(dataset, imputer, allele=None, **kwargs):
+def impute_and_select_allele(df, imputer, allele=None, **kwargs):
     '''
     Run imputation and optionally filter to the specified allele. 
     '''
+    print("Starting impute and select allele")
+    dataset = Dataset(df)
     result = dataset.impute_missing_values(imputer, **kwargs)
+    print("Done imputing in impute and select allele")
+
     if allele is not None:
         result = result.get_allele(allele)
-    return result
+    print(result)
+    return result.to_dataframe()
 
 def train_and_test_one_model_one_fold(
         model_description,
