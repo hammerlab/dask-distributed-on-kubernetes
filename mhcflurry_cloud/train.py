@@ -9,7 +9,6 @@ import numpy
 import pandas
 
 import mhcflurry
-from mhcflurry.dataset import Dataset
 
 from joblib import Parallel, delayed
 
@@ -66,19 +65,15 @@ def models_grid(**kwargs):
     ]
     return models
 
-def impute_and_select_allele(df, imputer, allele=None, **kwargs):
+def impute_and_select_allele(dataset, imputer, allele=None, **kwargs):
     '''
     Run imputation and optionally filter to the specified allele. 
     '''
-    print("Starting impute and select allele")
-    dataset = Dataset(df)
     result = dataset.impute_missing_values(imputer, **kwargs)
-    print("Done imputing in impute and select allele")
 
     if allele is not None:
         result = result.get_allele(allele)
-    print(result)
-    return result.to_dataframe()
+    return result
 
 def train_and_test_one_model_one_fold(
         model_description,
@@ -159,7 +154,7 @@ def train_and_test_one_model_one_fold(
             len(test_dataset) if test_dataset is not None else 0,
             impute,
             model_description))
-    
+
     predictor = mhcflurry.Class1BindingPredictor.from_hyperparameters(
         max_ic50=max_ic50,
         **model_params)
@@ -179,7 +174,8 @@ def train_and_test_one_model_one_fold(
 
     result = {
         'fit_time': fit_time,
-    }
+    }    
+
     if return_predictor:
         result['predictor'] = predictor
 
@@ -201,11 +197,9 @@ def train_and_test_one_model_one_fold(
             max_ic50=model_description["max_ic50"])
         if return_test_predictions:
             result['test_predictions'] = test_predictions
-
     return result
 
-
-def train_and_test_across_models_and_folds(
+def train_across_models_and_folds(
         folds,
         model_descriptions,
         cartesian_product_of_folds_and_models=True,
@@ -232,6 +226,20 @@ def train_and_test_across_models_and_folds(
     return_predictors : boolean, optional
         Include the trained predictors in the result.
 
+    n_jobs : integer, optional
+        The number of jobs to run in parallel. If -1, then the number of jobs
+        is set to the number of cores.
+
+    verbose : integer, optional
+        The joblib verbosity. If non zero, progress messages are printed. Above
+        50, the output is sent to stdout. The frequency of the messages
+        increases with the verbosity level. If it more than 10, all iterations
+        are reported.
+
+    pre_dispatch : {‘all’, integer, or expression, as in ‘3*n_jobs’}
+        The number of joblib batches (of tasks) to be pre-dispatched. Default
+        is ‘2*n_jobs’. 
+        
     Returns
     -----------
     pandas.DataFrame

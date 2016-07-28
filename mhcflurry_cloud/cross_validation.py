@@ -5,7 +5,6 @@ import logging
 
 from joblib import Parallel, delayed
 
-from mhcflurry.dataset import Dataset
 import pepdata
 
 from .common import AlleleSpecificTrainTestFold
@@ -111,6 +110,20 @@ def cross_validation_folds(
     impute_kwargs : dict, optional
         Additional kwargs to pass to mhcflurry.Dataset.impute_missing_values.
 
+    n_jobs : integer, optional
+        The number of jobs to run in parallel. If -1, then the number of jobs
+        is set to the number of cores.
+
+    verbose : integer, optional
+        The joblib verbosity. If non zero, progress messages are printed. Above
+        50, the output is sent to stdout. The frequency of the messages
+        increases with the verbosity level. If it more than 10, all iterations
+        are reported.
+
+    pre_dispatch : {‘all’, integer, or expression, as in ‘3*n_jobs’}
+        The number of joblib batches (of tasks) to be pre-dispatched. Default
+        is ‘2*n_jobs’. 
+
     Returns
     -----------
     list of AlleleSpecificTrainTestFold of length num alleles * n_folds
@@ -145,7 +158,7 @@ def cross_validation_folds(
  
             if imputer is not None:
                 imputation_tasks.append(delayed(impute_and_select_allele)(
-                    all_allele_train_split.to_dataframe(),
+                    all_allele_train_split,
                     imputer=imputer,
                     allele=allele,
                     **impute_kwargs))
@@ -159,16 +172,14 @@ def cross_validation_folds(
             result.append(fold)
 
     if imputer is not None:
-        #import pdb ; pdb.set_trace()
         imputation_results = Parallel(
-            backend='threading',
             n_jobs=n_jobs,
             verbose=verbose,
             pre_dispatch=pre_dispatch)(imputation_tasks)
 
         result = [
             result_fold._replace(
-                imputed_train=Dataset(imputation_result))
+                imputed_train=imputation_result)
             for (imputation_result, result_fold)
             in zip(imputation_results, result)
         ]

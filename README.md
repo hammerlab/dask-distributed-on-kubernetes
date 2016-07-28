@@ -1,5 +1,13 @@
 # mhcflurry-cloud
-Infrastructure for mhcflurry model selection in the cloud
+Infrastructure for parallelized mhcflurry model selection
+
+This module provides [joblib](https://github.com/joblib/joblib)-enabled routines
+to train and test [mhcflurry](https://github.com/hammerlab/mhcflurry) models.
+
+## Python 3.4 only for now on a single node
+
+When using the multiprocessing backend for joblib (the default), the 'fork' mode causes a library we use to hang. We have to instead use the 'spawn' or 'forkserver' modes. See this
+[note](https://pythonhosted.org/joblib/parallel.html#bad-interaction-of-multiprocessing-and-third-party-libraries) for more information.
 
 ## Running locally
 
@@ -9,19 +17,6 @@ $ pip install -e .
 $ nosetests .
 ```
 
-We'll run locally using RabbitMQ. See [docs](http://docs.celeryproject.org/en/latest/getting-started/brokers/rabbitmq.html#broker-rabbitmq).
-
-Setup rabbitmq:
-```
-$ brew install rabbitmq
-$ ln -sfv /usr/local/opt/rabbitmq/*.plist ~/Library/LaunchAgents  # launch on startup
-$ launchctl load ~/Library/LaunchAgents/homebrew.mxcl.rabbitmq.plist  # start now
-```
-
-Start celery worker:
-```
-$ celery -A mhcflurry_cloud.model_selection.app worker --loglevel=info
-```
 
 Then try running the [example notebook](notebooks/example1.ipynb).
 

@@ -29,6 +29,7 @@ setup(
     ],
     install_requires=[
         "mhcflurry",
+  #      "pepdata",
         "joblib",
         "nose>=1.3.1",
         "pandas>=0.16.1",
