@@ -120,9 +120,9 @@ def cross_validation_folds(
         increases with the verbosity level. If it more than 10, all iterations
         are reported.
 
-    pre_dispatch : {‘all’, integer, or expression, as in ‘3*n_jobs’}
+    pre_dispatch : {"all", integer, or expression, as in "3*n_jobs"}
         The number of joblib batches (of tasks) to be pre-dispatched. Default
-        is ‘2*n_jobs’. 
+        is "2*n_jobs". 
 
     Returns
     -----------

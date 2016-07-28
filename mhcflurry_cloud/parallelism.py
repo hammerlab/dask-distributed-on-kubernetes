@@ -1,4 +1,6 @@
 import multiprocessing
+import logging
+
 import joblib.parallel
 
 def configure_joblib(multiprocessing_mode="spawn"):
@@ -18,9 +20,10 @@ def configure_joblib(multiprocessing_mode="spawn"):
     multiprocessing_mode : string, one of "spawn", "fork", or "forkserver"
 
     """
-    if not hasattr(multiprocessing, "get_context"):
-        raise RuntimeError(
-            "Python 3.4 required (need multiprocessing.get_context)")
-
-    joblib.parallel.DEFAULT_MP_CONTEXT = multiprocessing.get_context(
-        multiprocessing_mode)
+    if hasattr(multiprocessing, "get_context"):
+        joblib.parallel.DEFAULT_MP_CONTEXT = multiprocessing.get_context(
+            multiprocessing_mode)
+    else:
+        logging.warning(
+            "You will probably get deadlocks on Python earlier than 3.4 "
+            "if you set n_jobs to anything other than 1.")
