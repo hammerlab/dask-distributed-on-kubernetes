@@ -10,7 +10,8 @@ import pandas
 
 import mhcflurry
 
-from .celery import app
+from joblib import Parallel, delayed
+
 from .scoring import make_scores
 
 DEFAULT_MODEL = dict(
@@ -28,7 +29,7 @@ DEFAULT_MODEL = dict(
 def models_grid(**kwargs):
     '''
     Make a "grid" of models by taking the cartesian product of all specified
-    model paramter lists.
+    model parameter lists.
 
     Parameters
     -----------
@@ -64,18 +65,17 @@ def models_grid(**kwargs):
     ]
     return models
 
-@app.task(name="train.task_impute")
-def task_impute(dataset, imputer, allele=None, **kwargs):
+def impute_and_select_allele(dataset, imputer, allele=None, **kwargs):
     '''
-    Task for imputation.
+    Run imputation and optionally filter to the specified allele. 
     '''
     result = dataset.impute_missing_values(imputer, **kwargs)
+
     if allele is not None:
         result = result.get_allele(allele)
     return result
 
-@app.task(name="train.task_train_and_test_one_model_one_fold")
-def task_train_and_test_one_model_one_fold(
+def train_and_test_one_model_one_fold(
         model_description,
         train_dataset,
         test_dataset=None,
@@ -83,7 +83,8 @@ def task_train_and_test_one_model_one_fold(
         return_train_scores=True,
         return_predictor=False,
         return_train_predictions=False,
-        return_test_predictions=False):
+        return_test_predictions=False,
+        n_jobs=1):
     '''
     Task for instantiating, training, and testing one model on one fold.
 
@@ -153,7 +154,7 @@ def task_train_and_test_one_model_one_fold(
             len(test_dataset) if test_dataset is not None else 0,
             impute,
             model_description))
-    
+
     predictor = mhcflurry.Class1BindingPredictor.from_hyperparameters(
         max_ic50=max_ic50,
         **model_params)
@@ -173,7 +174,8 @@ def task_train_and_test_one_model_one_fold(
 
     result = {
         'fit_time': fit_time,
-    }
+    }    
+
     if return_predictor:
         result['predictor'] = predictor
 
@@ -195,15 +197,16 @@ def task_train_and_test_one_model_one_fold(
             max_ic50=model_description["max_ic50"])
         if return_test_predictions:
             result['test_predictions'] = test_predictions
-
     return result
 
-
-def train_and_test_across_models_and_folds(
+def train_across_models_and_folds(
         folds,
         model_descriptions,
         cartesian_product_of_folds_and_models=True,
-        return_predictors=False):
+        return_predictors=False,
+        n_jobs=1,
+        verbose=0,
+        pre_dispatch='2*n_jobs'):
     '''
     Train and optionally test any number of models across any number of folds.
 
@@ -223,42 +226,57 @@ def train_and_test_across_models_and_folds(
     return_predictors : boolean, optional
         Include the trained predictors in the result.
 
+    n_jobs : integer, optional
+        The number of jobs to run in parallel. If -1, then the number of jobs
+        is set to the number of cores.
+
+    verbose : integer, optional
+        The joblib verbosity. If non zero, progress messages are printed. Above
+        50, the output is sent to stdout. The frequency of the messages
+        increases with the verbosity level. If it more than 10, all iterations
+        are reported.
+
+    pre_dispatch : {"all", integer, or expression, as in "3*n_jobs"}
+        The number of joblib batches (of tasks) to be pre-dispatched. Default
+        is "2*n_jobs". 
+
     Returns
     -----------
     pandas.DataFrame
     '''
 
     if cartesian_product_of_folds_and_models:
-        model_and_fold_indices = (
+        model_and_fold_indices = [
             (fold_num, model_num)
             for fold_num in range(len(folds))
             for model_num in range(len(model_descriptions))
-        )
+        ]
     else:
         assert len(folds) == len(model_descriptions), \
             "folds and models have different lengths and " \
             "cartesian_product_of_folds_and_models is False"
 
-        model_and_fold_indices = (
+        model_and_fold_indices = [
             (num, num)
             for num in range(len(folds))
-        )
+        ]
 
-    tasks = dict([
-        ((fold_num, model_num),
-            task_train_and_test_one_model_one_fold.delay(
+    logging.info("Training %d architectures on %d folds = %d predictors." % (
+        len(model_descriptions), len(folds), len(model_and_fold_indices)))
+
+    task_results = Parallel(
+        n_jobs=n_jobs,
+        verbose=verbose,
+        pre_dispatch=pre_dispatch)(
+            delayed(train_and_test_one_model_one_fold)(
                 model_descriptions[model_num],
                 train_dataset=folds[fold_num].train,
                 test_dataset=folds[fold_num].test,
                 imputed_train_dataset=folds[fold_num].imputed_train,
-                return_predictor=return_predictors))
-        for (fold_num, model_num) in model_and_fold_indices
-    ])
+                return_predictor=return_predictors)
+            for (fold_num, model_num) in model_and_fold_indices)
 
-    logging.info("Training %d architectures on %d folds = %d predictors." % (
-        len(model_descriptions), len(folds), len(tasks)))
-    task_results = dict((key, value.get()) for (key, value) in tasks.items())
-    logging.info("Done waiting.")
+    logging.info("Done.")
 
     results_dict = collections.OrderedDict()
 
@@ -267,7 +285,9 @@ def train_and_test_across_models_and_folds(
             results_dict[key] = []
         results_dict[key].append(value)
 
-    for ((fold_num, model_num), task_result) in task_results.items():
+    for ((fold_num, model_num), task_result) in zip(
+            model_and_fold_indices, task_results):
+
         fold = folds[fold_num]
         model_description = model_descriptions[model_num]
 
