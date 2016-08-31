@@ -1,0 +1,8 @@
+.git
+.gitignore
+LICENSE
+*.txt
+*.csv
+*.zip
+*.swp
+!requirements.txt
