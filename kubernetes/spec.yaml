@@ -1,0 +1,63 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: daskd-scheduler
+  labels:
+    app: daskd
+    role: scheduler
+spec:
+  ports:
+  - port: 8786
+    targetPort: 8786
+  selector:
+    app: daskd
+    role: scheduler
+  type: LoadBalancer
+---
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+  name: daskd-scheduler
+spec:
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        app: daskd
+        role: scheduler
+    spec:
+      containers:
+      - name: scheduler
+        image: hammerlab/mhcflurry-cloud:latest
+        command: ["venv-py3/bin/dask-scheduler"]
+        resources:
+          requests:
+            cpu: 100m
+            memory: 3000Mi
+        ports:
+        - containerPort: 8786
+---
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+  name: daskd-worker
+spec:
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        app: daskd
+        role: worker
+    spec:
+      containers:
+      - name: worker
+        image: hammerlab/mhcflurry-cloud:latest
+        command: [
+          "/bin/bash",
+          "-c",
+          "venv-py3/bin/dask-worker $DASKD_SCHEDULER_SERVICE_HOST:$DASKD_SCHEDULER_SERVICE_PORT"]
+        resources:
+          requests:
+            cpu: 100m
+            memory: 3000Mi
+
