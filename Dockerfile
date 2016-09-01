@@ -1,4 +1,4 @@
-FROM hammerlab/mhcflurry-misc:base1
+FROM hammerlab/mhcflurry:latest
 
 MAINTAINER Tim O'Donnell <timodonnell@gmail.com>
 
@@ -13,6 +13,5 @@ EXPOSE 8786
 
 COPY . ./mhcflurry-cloud
 
-RUN venv-py3/bin/pip install ./mhcflurry-cloud && \
-    venv-py2/bin/pip install ./mhcflurry-cloud
+RUN venv-py3/bin/pip install ./mhcflurry-cloud
 
