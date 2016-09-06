@@ -11,6 +11,10 @@ EXPOSE 9786
 # dask distributed scheduler worker interface
 EXPOSE 8786
 
+USER root
+RUN apt-get install --yes libxml2-dev libxslt1-dev
+USER user
+
 COPY . ./mhcflurry-cloud
 
 RUN venv-py3/bin/pip install ./mhcflurry-cloud
