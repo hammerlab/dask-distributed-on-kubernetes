@@ -20,7 +20,7 @@ spec:
     app: daskd
     role: scheduler
   type: LoadBalancer
----
+--- 
 apiVersion: extensions/v1beta1
 kind: Deployment
 metadata:
@@ -40,7 +40,7 @@ spec:
         command: ["venv-py3/bin/dask-scheduler"]
         resources:
           requests:
-            cpu: 1
+            cpu: 10
             # memory: 5000Mi
         ports:
         - containerPort: 8786
@@ -68,6 +68,6 @@ spec:
         ]
         resources:
           requests:
-            cpu: 1
+            cpu: 10
             # memory: 2000Mi
 

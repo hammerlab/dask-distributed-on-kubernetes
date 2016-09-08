@@ -6,7 +6,7 @@ I called mine "tim-ml1":
 
 ```
 gcloud container clusters create tim-ml1 \
-    --zone us-east1-b --num-nodes=1 \
+    --zone us-east1-b --num-nodes=2 \
     --enable-autoscaling --min-nodes=1 --max-nodes=100 \
     --machine-type=n1-standard-32
 ```
