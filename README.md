@@ -26,7 +26,7 @@ gcloud container clusters get-credentials daskd-cluster
 
 You will want to edit [spec.yaml](spec.yaml) to use the docker image appropriate for your task. You may also want to customize the CPU and memory thresholds requested based on what's required for your task.
 
-This will launch dask scheduler and one worker:
+This will launch a dask.distributed scheduler and one worker:
 
 ```
 kubectl create -f spec.yaml
@@ -36,20 +36,6 @@ You can check how many workers are running with:
 
 ```
 kubectl get pods
-```
-
-Now, get the IP of the scheduler (you want the external ip of daskd-scheduler):
-
-```
-$ kubectl get service
-NAME              CLUSTER-IP    EXTERNAL-IP       PORT(S)    AGE
-daskd-scheduler   10.3.249.60   104.196.185.187   8786/TCP   4m
-kubernetes        10.3.240.1    <none>            443/TCP    17h
-```
-
-Sometimes this one-liner is handy for getting the IP:
-```
-DASK_IP=$(kubectl get service | grep daskd-scheduler | tr -s ' ' | cut -d ' ' -f 3)
 ```
 
 Now, scale up the deployment. Here we request 100 workers:
@@ -68,6 +54,20 @@ kubectl logs daskd-scheduler-3680716393-j19xr
 
 ## Run your analysis
 
+First, get the IP of the scheduler (you want the external ip of daskd-scheduler):
+
+```
+$ kubectl get service
+NAME              CLUSTER-IP    EXTERNAL-IP       PORT(S)    AGE
+daskd-scheduler   10.3.249.60   104.196.185.187   8786/TCP   4m
+kubernetes        10.3.240.1    <none>            443/TCP    17h
+```
+
+For scripting, here's a one-liner for getting the IP:
+```
+DASK_IP=$(kubectl get service | grep daskd-scheduler | tr -s ' ' | cut -d ' ' -f 3)
+```
+
 When you instantiate your dask Executor, just pass in the IP and port:
 
 ```python
@@ -84,9 +84,11 @@ print(results)
 ## Tearing it down
 
 When you're done, shut down the service and cluster:
+
 ```
 kubectl delete -f spec.yaml
 gcloud container clusters delete daskd-cluster
+```
 
 ## Running a benchmark
 
