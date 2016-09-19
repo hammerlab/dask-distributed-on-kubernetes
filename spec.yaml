@@ -35,13 +35,13 @@ spec:
     spec:
       containers:
       - name: scheduler
-        image: hammerlab/mhcflurry-misc:dev1
+        image: hammerlab/mhcflurry-misc:dev1  # CHANGE THIS TO BE YOUR DOCKER HUB IMAGE
         imagePullPolicy: Always
         command: ["venv-py3/bin/dask-scheduler"]
         resources:
           requests:
-            cpu: 10
-            # memory: 5000Mi
+            cpu: 12  # set aside some extra resources for the scheduler
+            memory: 5000Mi
         ports:
         - containerPort: 8786
 ---
@@ -59,7 +59,7 @@ spec:
     spec:
       containers:
       - name: worker
-        image: hammerlab/mhcflurry-misc:dev1
+        image: hammerlab/mhcflurry-misc:dev1  # CHANGE THIS TO BE YOUR DOCKER HUB IMAGE
         imagePullPolicy: Always
         command: [
           "/bin/bash",
@@ -68,6 +68,5 @@ spec:
         ]
         resources:
           requests:
-            cpu: 10
-            # memory: 2000Mi
+            cpu: 1
 
