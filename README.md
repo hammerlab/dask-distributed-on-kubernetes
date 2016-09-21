@@ -8,9 +8,10 @@ If you don't already have a cluster running, use a command like the following to
 
 ```
 gcloud container clusters create daskd-cluster \
-    --zone us-east1-b --num-nodes=2 \
+    --zone us-east1-b \
+    --num-nodes=2 \
     --enable-autoscaling --min-nodes=1 --max-nodes=100 \
-    --machine-type=n1-standard-32
+    --machine-type=n1-highmem-16
 ```
 
 You should see your cluster:

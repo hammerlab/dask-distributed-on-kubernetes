@@ -40,8 +40,8 @@ spec:
         command: ["venv-py3/bin/dask-scheduler"]
         resources:
           requests:
-            cpu: 12  # set aside some extra resources for the scheduler
-            memory: 5000Mi
+            cpu: 1
+            memory: 10000Mi # set aside some extra resources for the scheduler
         ports:
         - containerPort: 8786
 ---
@@ -69,4 +69,5 @@ spec:
         resources:
           requests:
             cpu: 1
+            memory: 6000Mi
 
