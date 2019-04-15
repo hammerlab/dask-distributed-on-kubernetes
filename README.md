@@ -77,7 +77,7 @@ from dask.distributed import Executor
 from dask import delayed
 
 client = Executor("104.196.185.187:8786")
-tasks = [dask.delayed(sqrt)(i) for i in range(100)]
+tasks = [delayed(sqrt)(i) for i in range(100)]
 results = client.compute(tasks, sync=True)
 print(results)
 ```
